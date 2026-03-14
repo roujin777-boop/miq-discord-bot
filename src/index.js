@@ -206,80 +206,139 @@ async function drawAvatarPanel(ctx, avatarUrl, avatarX, avatarY, avatarW, avatar
 }
 
 function drawDiagonalSeam(ctx, seamX, direction) {
-  // 黒の芯
+  const isLTR = direction === 'left-to-right';
+
+  // 1) 中央の黒い芯
   ctx.save();
   ctx.beginPath();
-  if (direction === 'left-to-right') {
-    ctx.moveTo(seamX - 34, 0);
-    ctx.lineTo(seamX, 0);
-    ctx.lineTo(seamX + 44, HEIGHT);
-    ctx.lineTo(seamX + 10, HEIGHT);
+  if (isLTR) {
+    ctx.moveTo(seamX - 22, 0);
+    ctx.lineTo(seamX + 6, 0);
+    ctx.lineTo(seamX + 36, HEIGHT);
+    ctx.lineTo(seamX + 8, HEIGHT);
   } else {
-    ctx.moveTo(seamX, 0);
-    ctx.lineTo(seamX + 34, 0);
-    ctx.lineTo(seamX - 10, HEIGHT);
-    ctx.lineTo(seamX - 44, HEIGHT);
+    ctx.moveTo(seamX - 6, 0);
+    ctx.lineTo(seamX + 22, 0);
+    ctx.lineTo(seamX - 8, HEIGHT);
+    ctx.lineTo(seamX - 36, HEIGHT);
   }
   ctx.closePath();
-  ctx.fillStyle = '#000000';
+  ctx.fillStyle = 'rgba(0,0,0,0.92)';
   ctx.fill();
   ctx.restore();
 
-  // 周辺グラデーション
+  // 2) 左右に広がる暗いぼかし
   ctx.save();
   ctx.beginPath();
-  if (direction === 'left-to-right') {
-    ctx.moveTo(seamX - 34, 0);
-    ctx.lineTo(seamX + 26, 0);
-    ctx.lineTo(seamX + 92, HEIGHT);
-    ctx.lineTo(seamX + 10, HEIGHT);
+  if (isLTR) {
+    ctx.moveTo(seamX - 70, 0);
+    ctx.lineTo(seamX + 24, 0);
+    ctx.lineTo(seamX + 104, HEIGHT);
+    ctx.lineTo(seamX + 4, HEIGHT);
   } else {
-    ctx.moveTo(seamX + 34, 0);
-    ctx.lineTo(seamX + 94, 0);
-    ctx.lineTo(seamX + 28, HEIGHT);
-    ctx.lineTo(seamX - 10, HEIGHT);
+    ctx.moveTo(seamX - 24, 0);
+    ctx.lineTo(seamX + 70, 0);
+    ctx.lineTo(seamX - 4, HEIGHT);
+    ctx.lineTo(seamX - 104, HEIGHT);
   }
   ctx.closePath();
 
-  const gradient =
-    direction === 'left-to-right'
-      ? ctx.createLinearGradient(seamX - 34, 0, seamX + 92, 0)
-      : ctx.createLinearGradient(seamX - 10, 0, seamX + 94, 0);
+  const darkBlur = isLTR
+    ? ctx.createLinearGradient(seamX - 70, 0, seamX + 104, 0)
+    : ctx.createLinearGradient(seamX - 104, 0, seamX + 70, 0);
 
-  if (direction === 'left-to-right') {
-    gradient.addColorStop(0.00, 'rgba(0,0,0,0.00)');
-    gradient.addColorStop(0.25, 'rgba(0,0,0,0.18)');
-    gradient.addColorStop(0.58, 'rgba(255,255,255,0.10)');
-    gradient.addColorStop(1.00, 'rgba(255,255,255,0.00)');
+  if (isLTR) {
+    darkBlur.addColorStop(0.00, 'rgba(0,0,0,0.00)');
+    darkBlur.addColorStop(0.20, 'rgba(0,0,0,0.10)');
+    darkBlur.addColorStop(0.45, 'rgba(0,0,0,0.28)');
+    darkBlur.addColorStop(0.72, 'rgba(0,0,0,0.18)');
+    darkBlur.addColorStop(1.00, 'rgba(0,0,0,0.00)');
   } else {
-    gradient.addColorStop(0.00, 'rgba(255,255,255,0.00)');
-    gradient.addColorStop(0.18, 'rgba(255,255,255,0.10)');
-    gradient.addColorStop(0.48, 'rgba(0,0,0,0.20)');
-    gradient.addColorStop(1.00, 'rgba(0,0,0,0.00)');
+    darkBlur.addColorStop(0.00, 'rgba(0,0,0,0.00)');
+    darkBlur.addColorStop(0.28, 'rgba(0,0,0,0.18)');
+    darkBlur.addColorStop(0.55, 'rgba(0,0,0,0.28)');
+    darkBlur.addColorStop(0.80, 'rgba(0,0,0,0.10)');
+    darkBlur.addColorStop(1.00, 'rgba(0,0,0,0.00)');
   }
 
-  ctx.fillStyle = gradient;
+  ctx.fillStyle = darkBlur;
   ctx.fill();
   ctx.restore();
 
-  // さらに柔らかい縦ぼかし
+  // 3) 境界の内側に入る明るいにじみ
   ctx.save();
-  const soft =
-    direction === 'left-to-right'
-      ? ctx.createLinearGradient(seamX - 10, 0, seamX + 46, 0)
-      : ctx.createLinearGradient(seamX - 46, 0, seamX + 10, 0);
-
-  if (direction === 'left-to-right') {
-    soft.addColorStop(0.0, 'rgba(255,255,255,0.12)');
-    soft.addColorStop(1.0, 'rgba(255,255,255,0.00)');
-    ctx.fillStyle = soft;
-    ctx.fillRect(seamX - 10, 0, 56, HEIGHT);
+  ctx.beginPath();
+  if (isLTR) {
+    ctx.moveTo(seamX - 16, 0);
+    ctx.lineTo(seamX + 42, 0);
+    ctx.lineTo(seamX + 86, HEIGHT);
+    ctx.lineTo(seamX + 18, HEIGHT);
   } else {
-    soft.addColorStop(0.0, 'rgba(255,255,255,0.00)');
-    soft.addColorStop(1.0, 'rgba(255,255,255,0.12)');
-    ctx.fillStyle = soft;
-    ctx.fillRect(seamX - 46, 0, 56, HEIGHT);
+    ctx.moveTo(seamX - 42, 0);
+    ctx.lineTo(seamX + 16, 0);
+    ctx.lineTo(seamX - 18, HEIGHT);
+    ctx.lineTo(seamX - 86, HEIGHT);
   }
+  ctx.closePath();
+
+  const lightGlow = isLTR
+    ? ctx.createLinearGradient(seamX - 16, 0, seamX + 86, 0)
+    : ctx.createLinearGradient(seamX - 86, 0, seamX + 16, 0);
+
+  if (isLTR) {
+    lightGlow.addColorStop(0.00, 'rgba(255,255,255,0.00)');
+    lightGlow.addColorStop(0.35, 'rgba(255,255,255,0.07)');
+    lightGlow.addColorStop(0.55, 'rgba(255,255,255,0.15)');
+    lightGlow.addColorStop(0.78, 'rgba(255,255,255,0.04)');
+    lightGlow.addColorStop(1.00, 'rgba(255,255,255,0.00)');
+  } else {
+    lightGlow.addColorStop(0.00, 'rgba(255,255,255,0.00)');
+    lightGlow.addColorStop(0.22, 'rgba(255,255,255,0.04)');
+    lightGlow.addColorStop(0.45, 'rgba(255,255,255,0.15)');
+    lightGlow.addColorStop(0.65, 'rgba(255,255,255,0.07)');
+    lightGlow.addColorStop(1.00, 'rgba(255,255,255,0.00)');
+  }
+
+  ctx.fillStyle = lightGlow;
+  ctx.fill();
+  ctx.restore();
+
+  // 4) さらに外側へ薄く広がる霧
+  ctx.save();
+  ctx.beginPath();
+  if (isLTR) {
+    ctx.moveTo(seamX - 120, 0);
+    ctx.lineTo(seamX + 36, 0);
+    ctx.lineTo(seamX + 126, HEIGHT);
+    ctx.lineTo(seamX - 8, HEIGHT);
+  } else {
+    ctx.moveTo(seamX - 36, 0);
+    ctx.lineTo(seamX + 120, 0);
+    ctx.lineTo(seamX + 8, HEIGHT);
+    ctx.lineTo(seamX - 126, HEIGHT);
+  }
+  ctx.closePath();
+
+  const fog = isLTR
+    ? ctx.createLinearGradient(seamX - 120, 0, seamX + 126, 0)
+    : ctx.createLinearGradient(seamX - 126, 0, seamX + 120, 0);
+
+  if (isLTR) {
+    fog.addColorStop(0.00, 'rgba(255,255,255,0.00)');
+    fog.addColorStop(0.30, 'rgba(255,255,255,0.03)');
+    fog.addColorStop(0.52, 'rgba(255,255,255,0.06)');
+    fog.addColorStop(0.72, 'rgba(255,255,255,0.02)');
+    fog.addColorStop(1.00, 'rgba(255,255,255,0.00)');
+  } else {
+    fog.addColorStop(0.00, 'rgba(255,255,255,0.00)');
+    fog.addColorStop(0.28, 'rgba(255,255,255,0.02)');
+    fog.addColorStop(0.48, 'rgba(255,255,255,0.06)');
+    fog.addColorStop(0.70, 'rgba(255,255,255,0.03)');
+    fog.addColorStop(1.00, 'rgba(255,255,255,0.00)');
+  }
+
+  ctx.fillStyle = fog;
+  ctx.fill();
   ctx.restore();
 }
 
