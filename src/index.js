@@ -385,7 +385,7 @@ client.once(Events.ClientReady, (readyClient) => {
 
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
-  if (interaction.commandName !== 'miq') return;
+  if (!['miq', 'goroku'].includes(interaction.commandName)) return;
 
   const user = interaction.options.getUser('user', true);
   const member = interaction.options.getMember('user');
