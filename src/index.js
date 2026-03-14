@@ -67,7 +67,7 @@ function getTheme(type) {
   switch (type) {
     case 'color':
       return {
-        bg: '#08111f',
+        bg: '#000000',
         text: '#ffffff',
         subtext: 'rgba(255,255,255,0.82)',
         dividerShadow: true,
@@ -212,33 +212,34 @@ function fitTextLines(ctx, text, maxWidth, maxHeight, startSize, minSize, maxLin
   };
 }
 
-function drawSoftBackground(ctx, theme) {
-  ctx.fillStyle = '#0b0d14';
-  ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
-  const bg = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
-  bg.addColorStop(0, theme.overlay);
-  bg.addColorStop(1, 'rgba(255,255,255,0.00)');
-  ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
-  ctx.fillStyle = 'rgba(255,255,255,0.04)';
-  ctx.beginPath();
-  ctx.arc(140, 90, 220, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.arc(WIDTH - 80, HEIGHT - 40, 260, 0, Math.PI * 2);
-  ctx.fill();
-}
+ctx.fillStyle = "#000000";
+ctx.fillRect(0, 0, WIDTH, HEIGHT);
+//  function drawSoftBackground(ctx, theme) {
+//  ctx.fillStyle = '#0b0d14';
+//  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+//
+//  const bg = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
+//  bg.addColorStop(0, theme.overlay);
+//  bg.addColorStop(1, 'rgba(255,255,255,0.00)');
+//  ctx.fillStyle = bg;
+//  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+//
+//  ctx.fillStyle = 'rgba(255,255,255,0.04)';
+//  ctx.beginPath();
+//  ctx.arc(140, 90, 220, 0, Math.PI * 2);
+//  ctx.fill();
+//
+//  ctx.beginPath();
+//  ctx.arc(WIDTH - 80, HEIGHT - 40, 260, 0, Math.PI * 2);
+//  ctx.fill();
+//}
 
 async function drawAvatarPanel(ctx, avatarUrl, avatarX, avatarY, avatarW, avatarH) {
   try {
     const avatar = await loadImage(avatarUrl);
 
     ctx.save();
-    roundRect(ctx, avatarX, avatarY, avatarW, avatarH, 26);
-    ctx.clip();
+    ctx.drawImage(avatar, avatarX, avatarY, avatarW, avatarH);
 
     const scale = Math.max(avatarW / avatar.width, avatarH / avatar.height);
     const drawW = avatar.width * scale;
@@ -269,17 +270,17 @@ async function renderMiq({ avatarUrl, displayName, username, userId, text, type 
 
   drawSoftBackground(ctx, theme);
 
-  roundRect(ctx, 14, 14, WIDTH - 28, HEIGHT - 28, 18);
-  ctx.fillStyle = '#0c0d11';
-  ctx.fill();
-
-  roundRect(ctx, 26, 26, WIDTH - 52, HEIGHT - 52, 20);
-  ctx.fillStyle = theme.bg;
-  ctx.fill();
+//  roundRect(ctx, 14, 14, WIDTH - 28, HEIGHT - 28, 18);
+//  ctx.fillStyle = '#0c0d11';
+//  ctx.fill();
+//
+//  roundRect(ctx, 26, 26, WIDTH - 52, HEIGHT - 52, 20);
+//  ctx.fillStyle = theme.bg;
+//  ctx.fill();
 
   const panelY = 26;
   const panelH = HEIGHT - 52;
-  const avatarPanelW = 480;
+  const avatarPanelW = WIDTH * 0.48;
   const textPanelX = 26 + avatarPanelW;
   const textPanelW = WIDTH - 52 - avatarPanelW;
 
