@@ -43,18 +43,17 @@ const path = require('path');
 
 try {
   GlobalFonts.registerFromPath(
-    path.join(__dirname, '..', 'fonts', 'NotoSansJP-Regular.ttf'),
-    'Noto Sans JP'
+    '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
+    'Noto Sans CJK JP'
   );
   GlobalFonts.registerFromPath(
-    path.join(__dirname, '..', 'fonts', 'NotoSansJP-Bold.ttf'),
-    'Noto Sans JP Bold'
+    '/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc',
+    'Noto Sans CJK JP Bold'
   );
-  console.log('Custom fonts loaded');
+  console.log('Available fonts:', GlobalFonts.families);
 } catch (e) {
   console.error('Font load failed:', e);
 }
-
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds]
@@ -180,7 +179,7 @@ function fitTextLines(ctx, text, maxWidth, maxHeight, startSize, minSize, maxLin
   let lines = [];
 
   while (fontSize >= minSize) {
-    ctx.font = `${weight} ${fontSize}px "Noto Sans JP Bold"`;
+    ctx.font = `${weight} ${fontSize}px "Noto Sans CJK JP Bold"`;
     lines = wrapChars(ctx, text, maxWidth, maxLines);
     const lineHeight = fontSize * 1.28;
     const totalHeight = lines.length * lineHeight;
@@ -195,7 +194,7 @@ function fitTextLines(ctx, text, maxWidth, maxHeight, startSize, minSize, maxLin
     fontSize -= 2;
   }
 
-  ctx.font = `${weight} ${minSize}px "Noto Sans JP Bold"`;
+  ctx.font = `${weight} ${minSize}px "Noto Sans CJK JP Bold"`;
   lines = wrapChars(ctx, text, maxWidth, maxLines);
 
   if (lines.length > 0) {
@@ -329,7 +328,7 @@ async function renderMiq({ avatarUrl, displayName, username, userId, text, type 
   );
 
   ctx.fillStyle = theme.text;
-  ctx.font = `700 ${quoteLayout.fontSize}px "Noto Sans JP Bold"`;
+  ctx.font = `700 ${quoteLayout.fontSize}px "Noto Sans CJK JP Bold"`;
 
   const totalTextHeight = quoteLayout.lines.length * quoteLayout.lineHeight;
   const quoteBaseY = 210 - totalTextHeight / 2 + quoteLayout.lineHeight / 2;
@@ -352,7 +351,7 @@ async function renderMiq({ avatarUrl, displayName, username, userId, text, type 
   );
 
   ctx.fillStyle = theme.text;
-  ctx.font = `700 ${nameLayout.fontSize}px "Noto Sans JP Bold"`;
+  ctx.font = `700 ${nameLayout.fontSize}px "Noto Sans CJK JP Bold"`;
 
   const nameTotalHeight = nameLayout.lines.length * nameLayout.lineHeight;
   const nameBaseY = 360 - nameTotalHeight / 2 + nameLayout.lineHeight / 2;
@@ -362,27 +361,21 @@ async function renderMiq({ avatarUrl, displayName, username, userId, text, type 
   });
 
   // @username（小さめ）
-  ctx.font = `500 24px "Noto Sans JP Bold"`;
+  ctx.font = `500 24px "Noto Sans CJK JP"`;
   ctx.fillStyle = theme.subtext;
   ctx.fillText(`@${username}`, centerX, 445);
 
   // ID（さらに小さめ）
-  ctx.font = `500 17px "Noto Sans JP Bold"`;
+  ctx.font = `500 17px "Noto Sans CJK JP"`;
   ctx.fillStyle = theme.subtext;
   ctx.fillText(String(userId), centerX, 480);
 
   ctx.textAlign = 'right';
   ctx.textBaseline = 'alphabetic';
-  ctx.font = `500 13px "Noto Sans JP Bold"`;
+  ctx.font = `500 13px "Noto Sans CJK JP"`;
   ctx.fillStyle = theme.subtext;
   ctx.fillText('Blueberry Health BOT', WIDTH - 34, HEIGHT - 22);
 
-  ctx.fillStyle = '#ff0000';
-  ctx.font = '40px sans-serif';
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'top';
-  ctx.fillText('DEBUG TEXT', 20, 20);
-  
   return canvas.encode('png');
 }
 
