@@ -35,9 +35,39 @@ const commands = [
           { name: 'white', value: 'white' },
           { name: 'reverseWhite', value: 'reverseWhite' }
         )
+    ),
+
+    new SlashCommandBuilder()
+    .setName('goroku')
+    .setDescription('サーバ語録画像を生成します')
+    .addUserOption((option) =>
+      option
+        .setName('user')
+        .setDescription('画像に使うユーザー')
+        .setRequired(true)
     )
-    .toJSON()
-];
+    .addStringOption((option) =>
+      option
+        .setName('text')
+        .setDescription('画像に表示する本文')
+        .setRequired(true)
+        .setMaxLength(1200)
+    )
+    .addStringOption((option) =>
+      option
+        .setName('type')
+        .setDescription('画像タイプ')
+        .setRequired(false)
+        .addChoices(
+          { name: 'normal', value: 'normal' },
+          { name: 'color', value: 'color' },
+          { name: 'reverse', value: 'reverse' },
+          { name: 'reverseColor', value: 'reverseColor' },
+          { name: 'white', value: 'white' },
+          { name: 'reverseWhite', value: 'reverseWhite' }
+        )
+    )
+].map(command => command.toJSON());
 
 const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
 
