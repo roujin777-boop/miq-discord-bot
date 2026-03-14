@@ -14,8 +14,8 @@ const {
 } = require('@napi-rs/canvas');
 
 const PORT = Number(process.env.PORT || 3000);
-const WIDTH = 1200;
-const HEIGHT = 630;
+const WIDTH = 1280;
+const HEIGHT = 720;
 const MAX_TEXT_CHARS = 1200;
 
 const ALLOWED_TYPES = new Set([
@@ -38,8 +38,6 @@ app.listen(PORT, () => {
 if (!process.env.DISCORD_TOKEN) {
   throw new Error('DISCORD_TOKEN を設定してください。');
 }
-
-const path = require('path');
 
 try {
   GlobalFonts.registerFromPath(
@@ -70,68 +68,45 @@ function getTheme(type) {
         bg: '#000000',
         text: '#ffffff',
         subtext: 'rgba(255,255,255,0.82)',
-        dividerShadow: true,
-        avatarOnRight: false,
-        overlay: 'rgba(7, 15, 28, 0.10)'
+        avatarOnRight: false
       };
     case 'reverse':
       return {
         bg: '#000000',
         text: '#ffffff',
-        subtext: 'rgba(255,255,255,0.70)',
-        dividerShadow: true,
-        avatarOnRight: true,
-        overlay: 'rgba(0, 0, 0, 0.08)'
+        subtext: 'rgba(255,255,255,0.72)',
+        avatarOnRight: true
       };
     case 'reverseColor':
       return {
-        bg: '#111827',
+        bg: '#000000',
         text: '#ffffff',
-        subtext: 'rgba(255,255,255,0.74)',
-        dividerShadow: true,
-        avatarOnRight: true,
-        overlay: 'rgba(15, 23, 42, 0.10)'
+        subtext: 'rgba(255,255,255,0.76)',
+        avatarOnRight: true
       };
     case 'white':
       return {
-        bg: '#f5efe6',
+        bg: '#f6efe5',
         text: '#171717',
         subtext: 'rgba(23,23,23,0.62)',
-        dividerShadow: false,
-        avatarOnRight: false,
-        overlay: 'rgba(255,255,255,0.10)'
+        avatarOnRight: false
       };
     case 'reverseWhite':
       return {
-        bg: '#f3eadf',
+        bg: '#f6efe5',
         text: '#171717',
         subtext: 'rgba(23,23,23,0.62)',
-        dividerShadow: false,
-        avatarOnRight: true,
-        overlay: 'rgba(255,255,255,0.10)'
+        avatarOnRight: true
       };
     case 'normal':
     default:
       return {
         bg: '#000000',
         text: '#ffffff',
-        subtext: 'rgba(255,255,255,0.70)',
-        dividerShadow: true,
-        avatarOnRight: false,
-        overlay: 'rgba(0, 0, 0, 0.08)'
+        subtext: 'rgba(255,255,255,0.72)',
+        avatarOnRight: false
       };
   }
-}
-
-function roundRect(ctx, x, y, w, h, r) {
-  const radius = Math.min(r, w / 2, h / 2);
-  ctx.beginPath();
-  ctx.moveTo(x + radius, y);
-  ctx.arcTo(x + w, y, x + w, y + h, radius);
-  ctx.arcTo(x + w, y + h, x, y + h, radius);
-  ctx.arcTo(x, y + h, x, y, radius);
-  ctx.arcTo(x, y, x + w, y, radius);
-  ctx.closePath();
 }
 
 function wrapChars(ctx, text, maxWidth, maxLines) {
@@ -212,54 +187,100 @@ function fitTextLines(ctx, text, maxWidth, maxHeight, startSize, minSize, maxLin
   };
 }
 
-
-  function drawSoftBackground(ctx, theme) {
-  ctx.fillStyle = "#000000";
-　　ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
-  const bg = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
-  bg.addColorStop(0, theme.overlay);
-  bg.addColorStop(1, 'rgba(255,255,255,0.00)');
-  ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, WIDTH, HEIGHT);
-
-  ctx.fillStyle = 'rgba(255,255,255,0.04)';
-  ctx.beginPath();
-  ctx.arc(140, 90, 220, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.beginPath();
-  ctx.arc(WIDTH - 80, HEIGHT - 40, 260, 0, Math.PI * 2);
-  ctx.fill();
-}
-
 async function drawAvatarPanel(ctx, avatarUrl, avatarX, avatarY, avatarW, avatarH) {
   try {
     const avatar = await loadImage(avatarUrl);
 
-    ctx.save();
-    ctx.drawImage(avatar, avatarX, avatarY, avatarW, avatarH);
-
-    const scale = Math.max(avatarW / avatar.width, avatarH / avatar.height);
+    // TakasumiBOT風に少し大きめ・少し左寄せ
+    const scale = Math.max(avatarW / avatar.width, avatarH / avatar.height) * 1.08;
     const drawW = avatar.width * scale;
     const drawH = avatar.height * scale;
-    const drawX = avatarX + (avatarW - drawW) / 2;
+    const drawX = avatarX + (avatarW - drawW) / 2 - 36;
     const drawY = avatarY + (avatarH - drawH) / 2;
 
     ctx.drawImage(avatar, drawX, drawY, drawW, drawH);
-
-    const fade = ctx.createLinearGradient(avatarX, avatarY, avatarX + avatarW, avatarY);
-    fade.addColorStop(0, 'rgba(255,255,255,0.04)');
-    fade.addColorStop(1, 'rgba(0,0,0,0.10)');
-    ctx.fillStyle = fade;
-    ctx.fillRect(avatarX, avatarY, avatarW, avatarH);
-
-    ctx.restore();
   } catch (_e) {
-    ctx.fillStyle = '#3a3a3a';
-    roundRect(ctx, avatarX, avatarY, avatarW, avatarH, 26);
-    ctx.fill();
+    ctx.fillStyle = '#2f2f2f';
+    ctx.fillRect(avatarX, avatarY, avatarW, avatarH);
   }
+}
+
+function drawDiagonalSeam(ctx, seamX, direction) {
+  // 黒の芯
+  ctx.save();
+  ctx.beginPath();
+  if (direction === 'left-to-right') {
+    ctx.moveTo(seamX - 34, 0);
+    ctx.lineTo(seamX, 0);
+    ctx.lineTo(seamX + 44, HEIGHT);
+    ctx.lineTo(seamX + 10, HEIGHT);
+  } else {
+    ctx.moveTo(seamX, 0);
+    ctx.lineTo(seamX + 34, 0);
+    ctx.lineTo(seamX - 10, HEIGHT);
+    ctx.lineTo(seamX - 44, HEIGHT);
+  }
+  ctx.closePath();
+  ctx.fillStyle = '#000000';
+  ctx.fill();
+  ctx.restore();
+
+  // 周辺グラデーション
+  ctx.save();
+  ctx.beginPath();
+  if (direction === 'left-to-right') {
+    ctx.moveTo(seamX - 34, 0);
+    ctx.lineTo(seamX + 26, 0);
+    ctx.lineTo(seamX + 92, HEIGHT);
+    ctx.lineTo(seamX + 10, HEIGHT);
+  } else {
+    ctx.moveTo(seamX + 34, 0);
+    ctx.lineTo(seamX + 94, 0);
+    ctx.lineTo(seamX + 28, HEIGHT);
+    ctx.lineTo(seamX - 10, HEIGHT);
+  }
+  ctx.closePath();
+
+  const gradient =
+    direction === 'left-to-right'
+      ? ctx.createLinearGradient(seamX - 34, 0, seamX + 92, 0)
+      : ctx.createLinearGradient(seamX - 10, 0, seamX + 94, 0);
+
+  if (direction === 'left-to-right') {
+    gradient.addColorStop(0.00, 'rgba(0,0,0,0.00)');
+    gradient.addColorStop(0.25, 'rgba(0,0,0,0.18)');
+    gradient.addColorStop(0.58, 'rgba(255,255,255,0.10)');
+    gradient.addColorStop(1.00, 'rgba(255,255,255,0.00)');
+  } else {
+    gradient.addColorStop(0.00, 'rgba(255,255,255,0.00)');
+    gradient.addColorStop(0.18, 'rgba(255,255,255,0.10)');
+    gradient.addColorStop(0.48, 'rgba(0,0,0,0.20)');
+    gradient.addColorStop(1.00, 'rgba(0,0,0,0.00)');
+  }
+
+  ctx.fillStyle = gradient;
+  ctx.fill();
+  ctx.restore();
+
+  // さらに柔らかい縦ぼかし
+  ctx.save();
+  const soft =
+    direction === 'left-to-right'
+      ? ctx.createLinearGradient(seamX - 10, 0, seamX + 46, 0)
+      : ctx.createLinearGradient(seamX - 46, 0, seamX + 10, 0);
+
+  if (direction === 'left-to-right') {
+    soft.addColorStop(0.0, 'rgba(255,255,255,0.12)');
+    soft.addColorStop(1.0, 'rgba(255,255,255,0.00)');
+    ctx.fillStyle = soft;
+    ctx.fillRect(seamX - 10, 0, 56, HEIGHT);
+  } else {
+    soft.addColorStop(0.0, 'rgba(255,255,255,0.00)');
+    soft.addColorStop(1.0, 'rgba(255,255,255,0.12)');
+    ctx.fillStyle = soft;
+    ctx.fillRect(seamX - 46, 0, 56, HEIGHT);
+  }
+  ctx.restore();
 }
 
 async function renderMiq({ avatarUrl, displayName, username, userId, text, type }) {
@@ -267,61 +288,54 @@ async function renderMiq({ avatarUrl, displayName, username, userId, text, type 
   const canvas = createCanvas(WIDTH, HEIGHT);
   const ctx = canvas.getContext('2d');
 
-  drawSoftBackground(ctx, theme);
+  // 背景
+  ctx.fillStyle = theme.bg;
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-//  roundRect(ctx, 14, 14, WIDTH - 28, HEIGHT - 28, 18);
-//  ctx.fillStyle = '#0c0d11';
-//  ctx.fill();
-//
-//  roundRect(ctx, 26, 26, WIDTH - 52, HEIGHT - 52, 20);
-//  ctx.fillStyle = theme.bg;
-//  ctx.fill();
+  const avatarPanelW = Math.round(WIDTH * 0.47);
+  const textPanelW = WIDTH - avatarPanelW;
 
-  const panelY = 26;
-  const panelH = HEIGHT - 52;
-  const avatarPanelW = WIDTH * 0.48;
-  const textPanelX = 26 + avatarPanelW;
-  const textPanelW = WIDTH - 52 - avatarPanelW;
-
-  let avatarX = 26;
-  let textX = textPanelX;
+  let avatarX = 0;
+  let textX = avatarPanelW;
+  let seamDirection = 'left-to-right';
 
   if (theme.avatarOnRight) {
-    avatarX = WIDTH - 26 - avatarPanelW;
-    textX = 26;
+    avatarX = WIDTH - avatarPanelW;
+    textX = 0;
+    seamDirection = 'right-to-left';
   }
 
-  await drawAvatarPanel(ctx, avatarUrl, avatarX, panelY, avatarPanelW, panelH);
+  await drawAvatarPanel(ctx, avatarUrl, avatarX, 0, avatarPanelW, HEIGHT);
 
-  if (theme.dividerShadow) {
-    const shadowX = theme.avatarOnRight ? avatarX - 40 : avatarX + avatarPanelW - 40;
-    const shadow = ctx.createLinearGradient(shadowX, 0, shadowX + 80, 0);
-    if (theme.avatarOnRight) {
-      shadow.addColorStop(0, 'rgba(0,0,0,0)');
-      shadow.addColorStop(1, 'rgba(0,0,0,0.35)');
-    } else {
-      shadow.addColorStop(0, 'rgba(0,0,0,0.35)');
-      shadow.addColorStop(1, 'rgba(0,0,0,0)');
-    }
-    ctx.fillStyle = shadow;
-    ctx.fillRect(shadowX, panelY, 80, panelH);
+  // 白系テーマ時は右側背景を明示
+  if (type === 'white' || type === 'reverseWhite') {
+    ctx.fillStyle = '#f6efe5';
+    ctx.fillRect(textX, 0, textPanelW, HEIGHT);
+  } else {
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(textX, 0, textPanelW, HEIGHT);
   }
 
-  const centerX = textX + textPanelW / 2;
+  // 斜め境界
+  const seamX = theme.avatarOnRight ? avatarX : avatarPanelW;
+  drawDiagonalSeam(ctx, seamX, seamDirection);
+
+  // テキスト中心
+  const centerX = textX + textPanelW * 0.53;
 
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
   // 本文
-  const quoteMaxWidth = Math.min(420, textPanelW - 90);
-  const quoteMaxHeight = 170;
+  const quoteMaxWidth = Math.min(420, textPanelW - 110);
+  const quoteMaxHeight = 180;
   const safeText = text && text.trim() ? text.trim() : ' ';
   const quoteLayout = fitTextLines(
     ctx,
     safeText,
     quoteMaxWidth,
     quoteMaxHeight,
-    56,
+    58,
     32,
     3,
     700
@@ -331,14 +345,14 @@ async function renderMiq({ avatarUrl, displayName, username, userId, text, type 
   ctx.font = `700 ${quoteLayout.fontSize}px "Noto Sans CJK JP Bold"`;
 
   const totalTextHeight = quoteLayout.lines.length * quoteLayout.lineHeight;
-  const quoteBaseY = 210 - totalTextHeight / 2 + quoteLayout.lineHeight / 2;
+  const quoteBaseY = 305 - totalTextHeight / 2 + quoteLayout.lineHeight / 2;
 
   quoteLayout.lines.forEach((line, index) => {
     ctx.fillText(line, centerX, quoteBaseY + index * quoteLayout.lineHeight, quoteMaxWidth + 20);
   });
 
-  // displayName（主役）
-  const nameMaxWidth = Math.min(440, textPanelW - 80);
+  // displayName
+  const nameMaxWidth = Math.min(420, textPanelW - 110);
   const nameLayout = fitTextLines(
     ctx,
     displayName || username,
@@ -354,27 +368,31 @@ async function renderMiq({ avatarUrl, displayName, username, userId, text, type 
   ctx.font = `700 ${nameLayout.fontSize}px "Noto Sans CJK JP Bold"`;
 
   const nameTotalHeight = nameLayout.lines.length * nameLayout.lineHeight;
-  const nameBaseY = 410 - nameTotalHeight / 2 + nameLayout.lineHeight / 2;
-  
+  const nameBaseY = 430 - nameTotalHeight / 2 + nameLayout.lineHeight / 2;
+
   nameLayout.lines.forEach((line, index) => {
     ctx.fillText(line, centerX, nameBaseY + index * nameLayout.lineHeight, nameMaxWidth + 20);
   });
-  
-  // @username（小さめ）
+
+  // @username
   ctx.font = `500 24px "Noto Sans CJK JP"`;
   ctx.fillStyle = theme.subtext;
-  ctx.fillText(`@${username}`, centerX, 445);
-  
-  // ID（さらに小さめ）
+  ctx.fillText(`@${username}`, centerX, 468);
+
+  // ID
   ctx.font = `500 17px "Noto Sans CJK JP"`;
   ctx.fillStyle = theme.subtext;
-  ctx.fillText(String(userId), centerX, 480);
+  ctx.fillText(String(userId), centerX, 503);
 
+  // クレジット
   ctx.textAlign = 'right';
   ctx.textBaseline = 'alphabetic';
-  ctx.font = `500 13px "Noto Sans CJK JP"`;
-  ctx.fillStyle = theme.subtext;
-  ctx.fillText('Blueberry Health BOT', WIDTH - 34, HEIGHT - 22);
+  ctx.font = `500 12px "Noto Sans CJK JP"`;
+  ctx.fillStyle =
+    type === 'white' || type === 'reverseWhite'
+      ? 'rgba(23,23,23,0.28)'
+      : 'rgba(255,255,255,0.28)';
+  ctx.fillText('Blueberry Health BOT', WIDTH - 24, HEIGHT - 12);
 
   return canvas.encode('png');
 }
