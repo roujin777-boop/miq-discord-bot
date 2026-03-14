@@ -39,10 +39,20 @@ if (!process.env.DISCORD_TOKEN) {
   throw new Error('DISCORD_TOKEN を設定してください。');
 }
 
+const path = require('path');
+
 try {
-  GlobalFonts.registerFromPath('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', 'DejaVu Sans');
-} catch (_e) {
-  // フォント登録失敗時も継続
+  GlobalFonts.registerFromPath(
+    path.join(__dirname, '..', 'fonts', 'NotoSansJP-Regular.ttf'),
+    'Noto Sans JP'
+  );
+  GlobalFonts.registerFromPath(
+    path.join(__dirname, '..', 'fonts', 'NotoSansJP-Bold.ttf'),
+    'Noto Sans JP Bold'
+  );
+  console.log('Custom fonts loaded');
+} catch (e) {
+  console.error('Font load failed:', e);
 }
 
 const client = new Client({
@@ -169,7 +179,7 @@ function fitTextLines(ctx, text, maxWidth, maxHeight, startSize, minSize, maxLin
   let lines = [];
 
   while (fontSize >= minSize) {
-    ctx.font = `${weight} ${fontSize}px "DejaVu Sans", sans-serif`;
+    ctx.font = `${weight} ${fontSize}px "Noto Sans JP Bold"`;
     lines = wrapChars(ctx, text, maxWidth, maxLines);
     const lineHeight = fontSize * 1.28;
     const totalHeight = lines.length * lineHeight;
@@ -184,7 +194,7 @@ function fitTextLines(ctx, text, maxWidth, maxHeight, startSize, minSize, maxLin
     fontSize -= 2;
   }
 
-  ctx.font = `${weight} ${minSize}px "DejaVu Sans", sans-serif`;
+  ctx.font = `${weight} ${minSize}px "Noto Sans JP Bold"`;
   lines = wrapChars(ctx, text, maxWidth, maxLines);
 
   if (lines.length > 0) {
@@ -318,7 +328,7 @@ async function renderMiq({ avatarUrl, displayName, username, userId, text, type 
   );
 
   ctx.fillStyle = theme.text;
-  ctx.font = `700 ${quoteLayout.fontSize}px "DejaVu Sans", sans-serif`;
+  ctx.font = `700 ${quoteLayout.fontSize}px "Noto Sans JP Bold"`;
 
   const totalTextHeight = quoteLayout.lines.length * quoteLayout.lineHeight;
   const quoteBaseY = 210 - totalTextHeight / 2 + quoteLayout.lineHeight / 2;
@@ -341,7 +351,7 @@ async function renderMiq({ avatarUrl, displayName, username, userId, text, type 
   );
 
   ctx.fillStyle = theme.text;
-  ctx.font = `700 ${nameLayout.fontSize}px "DejaVu Sans", sans-serif`;
+  ctx.font = `700 ${nameLayout.fontSize}px "Noto Sans JP Bold"`;
 
   const nameTotalHeight = nameLayout.lines.length * nameLayout.lineHeight;
   const nameBaseY = 360 - nameTotalHeight / 2 + nameLayout.lineHeight / 2;
@@ -351,18 +361,18 @@ async function renderMiq({ avatarUrl, displayName, username, userId, text, type 
   });
 
   // @username（小さめ）
-  ctx.font = `500 24px "DejaVu Sans", sans-serif`;
+  ctx.font = `500 24px "Noto Sans JP Bold"`;
   ctx.fillStyle = theme.subtext;
   ctx.fillText(`@${username}`, centerX, 445);
 
   // ID（さらに小さめ）
-  ctx.font = `500 17px "DejaVu Sans", sans-serif`;
+  ctx.font = `500 17px "Noto Sans JP Bold"`;
   ctx.fillStyle = theme.subtext;
   ctx.fillText(String(userId), centerX, 480);
 
   ctx.textAlign = 'right';
   ctx.textBaseline = 'alphabetic';
-  ctx.font = `500 13px "DejaVu Sans", sans-serif`;
+  ctx.font = `500 13px "Noto Sans JP Bold"`;
   ctx.fillStyle = theme.subtext;
   ctx.fillText('Blueberry Health BOT', WIDTH - 34, HEIGHT - 22);
 
