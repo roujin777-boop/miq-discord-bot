@@ -55,6 +55,13 @@ try {
   console.error('Font load failed:', e);
 }
 
+
+const fs = require('fs');
+
+console.log('regular exists:', fs.existsSync(regularFontPath), regularFontPath);
+console.log('bold exists:', fs.existsSync(boldFontPath), boldFontPath);
+
+
 const client = new Client({
   intents: [GatewayIntentBits.Guilds]
 });
