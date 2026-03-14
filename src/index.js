@@ -212,27 +212,26 @@ function fitTextLines(ctx, text, maxWidth, maxHeight, startSize, minSize, maxLin
   };
 }
 
-ctx.fillStyle = "#000000";
-ctx.fillRect(0, 0, WIDTH, HEIGHT);
-//  function drawSoftBackground(ctx, theme) {
-//  ctx.fillStyle = '#0b0d14';
-//  ctx.fillRect(0, 0, WIDTH, HEIGHT);
-//
-//  const bg = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
-//  bg.addColorStop(0, theme.overlay);
-//  bg.addColorStop(1, 'rgba(255,255,255,0.00)');
-//  ctx.fillStyle = bg;
-//  ctx.fillRect(0, 0, WIDTH, HEIGHT);
-//
-//  ctx.fillStyle = 'rgba(255,255,255,0.04)';
-//  ctx.beginPath();
-//  ctx.arc(140, 90, 220, 0, Math.PI * 2);
-//  ctx.fill();
-//
-//  ctx.beginPath();
-//  ctx.arc(WIDTH - 80, HEIGHT - 40, 260, 0, Math.PI * 2);
-//  ctx.fill();
-//}
+
+  function drawSoftBackground(ctx, theme) {
+  ctx.fillStyle = "#000000";
+　　ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+  const bg = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
+  bg.addColorStop(0, theme.overlay);
+  bg.addColorStop(1, 'rgba(255,255,255,0.00)');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.04)';
+  ctx.beginPath();
+  ctx.arc(140, 90, 220, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(WIDTH - 80, HEIGHT - 40, 260, 0, Math.PI * 2);
+  ctx.fill();
+}
 
 async function drawAvatarPanel(ctx, avatarUrl, avatarX, avatarY, avatarW, avatarH) {
   try {
