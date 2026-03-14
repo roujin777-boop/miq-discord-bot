@@ -351,7 +351,7 @@ async function renderMiq({ avatarUrl, displayName, username, userId, text, type 
   );
 
   ctx.fillStyle = theme.text;
-  ctx.font = `570 ${nameLayout.fontSize}px "Noto Sans CJK JP Bold"`;
+  ctx.font = `700 ${nameLayout.fontSize}px "Noto Sans CJK JP Bold"`;
 
   const nameTotalHeight = nameLayout.lines.length * nameLayout.lineHeight;
   const nameBaseY = 360 - nameTotalHeight / 2 + nameLayout.lineHeight / 2;
