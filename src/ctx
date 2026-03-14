@@ -343,10 +343,10 @@ async function renderMiq({ avatarUrl, displayName, username, userId, text, type 
     ctx,
     displayName || username,
     nameMaxWidth,
-    90,
-    42,
-    24,
-    2,
+    48,
+    28,
+    22,
+    1,
     700
   );
 
@@ -354,17 +354,17 @@ async function renderMiq({ avatarUrl, displayName, username, userId, text, type 
   ctx.font = `700 ${nameLayout.fontSize}px "Noto Sans CJK JP Bold"`;
 
   const nameTotalHeight = nameLayout.lines.length * nameLayout.lineHeight;
-  const nameBaseY = 360 - nameTotalHeight / 2 + nameLayout.lineHeight / 2;
-
+  const nameBaseY = 380 - nameTotalHeight / 2 + nameLayout.lineHeight / 2;
+  
   nameLayout.lines.forEach((line, index) => {
     ctx.fillText(line, centerX, nameBaseY + index * nameLayout.lineHeight, nameMaxWidth + 20);
   });
-
+  
   // @username（小さめ）
   ctx.font = `500 24px "Noto Sans CJK JP"`;
   ctx.fillStyle = theme.subtext;
   ctx.fillText(`@${username}`, centerX, 445);
-
+  
   // ID（さらに小さめ）
   ctx.font = `500 17px "Noto Sans CJK JP"`;
   ctx.fillStyle = theme.subtext;
