@@ -16,10 +16,8 @@ const {
 const PORT = Number(process.env.PORT || 3000);
 const WIDTH = 1200;
 const HEIGHT = 630;
-const PADDING_X = 72;
-const PADDING_Y = 54;
-const AVATAR_SIZE = 144;
 const MAX_TEXT_CHARS = 1200;
+
 const ALLOWED_TYPES = new Set([
   'normal',
   'color',
@@ -38,11 +36,10 @@ app.listen(PORT, () => {
 });
 
 if (!process.env.DISCORD_TOKEN) {
-  throw new Error('DISCORD_TOKEN を .env に設定してください。');
+  throw new Error('DISCORD_TOKEN を設定してください。');
 }
 
 try {
-  // 一部環境で日本語が出やすくなるよう汎用フォールバックを追加。なくても動作はします。
   GlobalFonts.registerFromPath('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', 'DejaVu Sans');
 } catch (_e) {
   // フォント登録失敗時も継続
@@ -53,76 +50,70 @@ const client = new Client({
 });
 
 function escapeDisplayText(text) {
-  return text.replaceAll('#', '＃').trim().slice(0, MAX_TEXT_CHARS);
+  return String(text || '').replaceAll('#', '＃').trim().slice(0, MAX_TEXT_CHARS);
 }
 
 function getTheme(type) {
   switch (type) {
     case 'color':
       return {
-        background: '#111827',
-        bubble: '#2563eb',
+        bg: '#08111f',
         text: '#ffffff',
         subtext: 'rgba(255,255,255,0.82)',
-        accent: 'rgba(255,255,255,0.18)',
-        quoteMark: 'rgba(255,255,255,0.24)',
-        reverse: false
+        dividerShadow: true,
+        avatarOnRight: false,
+        overlay: 'rgba(7, 15, 28, 0.10)'
       };
     case 'reverse':
       return {
-        background: '#0b0b0f',
-        bubble: '#191a22',
-        text: '#f5f5f5',
-        subtext: 'rgba(255,255,255,0.72)',
-        accent: 'rgba(255,255,255,0.10)',
-        quoteMark: 'rgba(255,255,255,0.20)',
-        reverse: true
+        bg: '#000000',
+        text: '#ffffff',
+        subtext: 'rgba(255,255,255,0.70)',
+        dividerShadow: true,
+        avatarOnRight: true,
+        overlay: 'rgba(0, 0, 0, 0.08)'
       };
     case 'reverseColor':
       return {
-        background: '#0f172a',
-        bubble: '#7c3aed',
+        bg: '#111827',
         text: '#ffffff',
-        subtext: 'rgba(255,255,255,0.82)',
-        accent: 'rgba(255,255,255,0.16)',
-        quoteMark: 'rgba(255,255,255,0.24)',
-        reverse: true
+        subtext: 'rgba(255,255,255,0.74)',
+        dividerShadow: true,
+        avatarOnRight: true,
+        overlay: 'rgba(15, 23, 42, 0.10)'
       };
     case 'white':
       return {
-        background: '#f5f7fb',
-        bubble: '#ffffff',
-        text: '#111827',
-        subtext: 'rgba(17,24,39,0.70)',
-        accent: 'rgba(17,24,39,0.07)',
-        quoteMark: 'rgba(17,24,39,0.12)',
-        reverse: false
+        bg: '#f5efe6',
+        text: '#171717',
+        subtext: 'rgba(23,23,23,0.62)',
+        dividerShadow: false,
+        avatarOnRight: false,
+        overlay: 'rgba(255,255,255,0.10)'
       };
     case 'reverseWhite':
       return {
-        background: '#eef2f7',
-        bubble: '#ffffff',
-        text: '#111827',
-        subtext: 'rgba(17,24,39,0.70)',
-        accent: 'rgba(17,24,39,0.07)',
-        quoteMark: 'rgba(17,24,39,0.12)',
-        reverse: true
+        bg: '#f3eadf',
+        text: '#171717',
+        subtext: 'rgba(23,23,23,0.62)',
+        dividerShadow: false,
+        avatarOnRight: true,
+        overlay: 'rgba(255,255,255,0.10)'
       };
     case 'normal':
     default:
       return {
-        background: '#0b0b0f',
-        bubble: '#12131a',
+        bg: '#000000',
         text: '#ffffff',
-        subtext: 'rgba(255,255,255,0.72)',
-        accent: 'rgba(255,255,255,0.10)',
-        quoteMark: 'rgba(255,255,255,0.18)',
-        reverse: false
+        subtext: 'rgba(255,255,255,0.70)',
+        dividerShadow: true,
+        avatarOnRight: false,
+        overlay: 'rgba(0, 0, 0, 0.08)'
       };
   }
 }
 
-function roundRectPath(ctx, x, y, w, h, r) {
+function roundRect(ctx, x, y, w, h, r) {
   const radius = Math.min(r, w / 2, h / 2);
   ctx.beginPath();
   ctx.moveTo(x + radius, y);
@@ -133,187 +124,247 @@ function roundRectPath(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-function fitFontSize(ctx, text, maxWidth, startSize, minSize, weight = 700) {
-  let size = startSize;
-  while (size >= minSize) {
-    ctx.font = `${weight} ${size}px "DejaVu Sans", sans-serif`;
-    if (ctx.measureText(text).width <= maxWidth) return size;
-    size -= 2;
-  }
-  return minSize;
-}
-
-function wrapText(ctx, text, maxWidth, maxLines) {
+function wrapChars(ctx, text, maxWidth, maxLines) {
+  const chars = [...text];
   const lines = [];
-  const paragraphs = text.split(/\r?\n/);
+  let line = '';
 
-  for (const paragraph of paragraphs) {
-    const words = paragraph.split(/(\s+)/).filter(Boolean);
-    if (words.length === 0) {
-      lines.push('');
+  for (const ch of chars) {
+    if (ch === '\n') {
+      lines.push(line);
+      line = '';
+      if (lines.length >= maxLines) break;
       continue;
     }
 
-    let current = '';
-    for (const word of words) {
-      const testLine = current ? current + word : word.trimStart();
-      if (ctx.measureText(testLine).width <= maxWidth) {
-        current = testLine;
-      } else {
-        if (current) lines.push(current.trimEnd());
-        current = word.trimStart();
-      }
+    const test = line + ch;
+    const width = ctx.measureText(test).width;
 
+    if (width > maxWidth && line.length > 0) {
+      lines.push(line);
+      line = ch;
       if (lines.length >= maxLines) break;
+    } else {
+      line = test;
     }
-
-    if (lines.length < maxLines && current) {
-      lines.push(current.trimEnd());
-    }
-
-    if (lines.length >= maxLines) break;
   }
 
-  if (lines.length === 0) lines.push('');
+  if (lines.length < maxLines && line) {
+    lines.push(line);
+  }
+
+  if (lines.length === 0) {
+    lines.push('');
+  }
 
   if (lines.length > maxLines) {
     lines.length = maxLines;
   }
 
-  const lastIndex = lines.length - 1;
-  const hasMoreContent = lines.length >= maxLines;
-  if (hasMoreContent) {
-    let last = lines[lastIndex].replace(/[\s　]+$/g, '');
-    while (last.length > 1 && ctx.measureText(`${last}…`).width > maxWidth) {
-      last = last.slice(0, -1);
-    }
-    lines[lastIndex] = `${last}…`;
-  }
-
   return lines;
 }
 
-function drawBackground(ctx, theme) {
-  ctx.fillStyle = theme.background;
+function fitTextLines(ctx, text, maxWidth, maxHeight, startSize, minSize, maxLines, weight = 700) {
+  let fontSize = startSize;
+  let lines = [];
+
+  while (fontSize >= minSize) {
+    ctx.font = `${weight} ${fontSize}px "DejaVu Sans", sans-serif`;
+    lines = wrapChars(ctx, text, maxWidth, maxLines);
+    const lineHeight = fontSize * 1.28;
+    const totalHeight = lines.length * lineHeight;
+
+    const tooWide = lines.some((line) => ctx.measureText(line).width > maxWidth + 1);
+    const tooTall = totalHeight > maxHeight;
+
+    if (!tooWide && !tooTall) {
+      return { fontSize, lines, lineHeight };
+    }
+
+    fontSize -= 2;
+  }
+
+  ctx.font = `${weight} ${minSize}px "DejaVu Sans", sans-serif`;
+  lines = wrapChars(ctx, text, maxWidth, maxLines);
+
+  if (lines.length > 0) {
+    let last = lines[lines.length - 1];
+    while (last.length > 1 && ctx.measureText(`${last}…`).width > maxWidth) {
+      last = last.slice(0, -1);
+    }
+    lines[lines.length - 1] = `${last}…`;
+  }
+
+  return {
+    fontSize: minSize,
+    lines,
+    lineHeight: minSize * 1.28
+  };
+}
+
+function drawSoftBackground(ctx, theme) {
+  ctx.fillStyle = '#0b0d14';
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-  const g1 = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
-  g1.addColorStop(0, 'rgba(255,255,255,0.05)');
-  g1.addColorStop(1, 'rgba(255,255,255,0.00)');
-  ctx.fillStyle = g1;
+  const bg = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
+  bg.addColorStop(0, theme.overlay);
+  bg.addColorStop(1, 'rgba(255,255,255,0.00)');
+  ctx.fillStyle = bg;
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
-  ctx.fillStyle = theme.accent;
+  ctx.fillStyle = 'rgba(255,255,255,0.04)';
   ctx.beginPath();
-  ctx.arc(120, 90, 180, 0, Math.PI * 2);
+  ctx.arc(140, 90, 220, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.beginPath();
-  ctx.arc(WIDTH - 80, HEIGHT - 60, 220, 0, Math.PI * 2);
+  ctx.arc(WIDTH - 80, HEIGHT - 40, 260, 0, Math.PI * 2);
   ctx.fill();
 }
 
-async function renderMiq({ avatarUrl, displayName, username, text, type }) {
+async function drawAvatarPanel(ctx, avatarUrl, avatarX, avatarY, avatarW, avatarH) {
+  try {
+    const avatar = await loadImage(avatarUrl);
+
+    ctx.save();
+    roundRect(ctx, avatarX, avatarY, avatarW, avatarH, 26);
+    ctx.clip();
+
+    const scale = Math.max(avatarW / avatar.width, avatarH / avatar.height);
+    const drawW = avatar.width * scale;
+    const drawH = avatar.height * scale;
+    const drawX = avatarX + (avatarW - drawW) / 2;
+    const drawY = avatarY + (avatarH - drawH) / 2;
+
+    ctx.drawImage(avatar, drawX, drawY, drawW, drawH);
+
+    const fade = ctx.createLinearGradient(avatarX, avatarY, avatarX + avatarW, avatarY);
+    fade.addColorStop(0, 'rgba(255,255,255,0.04)');
+    fade.addColorStop(1, 'rgba(0,0,0,0.10)');
+    ctx.fillStyle = fade;
+    ctx.fillRect(avatarX, avatarY, avatarW, avatarH);
+
+    ctx.restore();
+  } catch (_e) {
+    ctx.fillStyle = '#3a3a3a';
+    roundRect(ctx, avatarX, avatarY, avatarW, avatarH, 26);
+    ctx.fill();
+  }
+}
+
+async function renderMiq({ avatarUrl, displayName, username, userId, text, type }) {
   const theme = getTheme(type);
   const canvas = createCanvas(WIDTH, HEIGHT);
   const ctx = canvas.getContext('2d');
-  drawBackground(ctx, theme);
 
-  const cardX = 36;
-  const cardY = 36;
-  const cardW = WIDTH - 72;
-  const cardH = HEIGHT - 72;
+  drawSoftBackground(ctx, theme);
 
-  roundRectPath(ctx, cardX, cardY, cardW, cardH, 34);
-  ctx.fillStyle = theme.bubble;
+  roundRect(ctx, 14, 14, WIDTH - 28, HEIGHT - 28, 18);
+  ctx.fillStyle = '#0c0d11';
   ctx.fill();
 
-  ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
+  roundRect(ctx, 26, 26, WIDTH - 52, HEIGHT - 52, 20);
+  ctx.fillStyle = theme.bg;
+  ctx.fill();
 
-  const isReverse = theme.reverse;
-  const avatarX = isReverse ? WIDTH - PADDING_X - AVATAR_SIZE : PADDING_X;
-  const avatarY = PADDING_Y;
+  const panelY = 26;
+  const panelH = HEIGHT - 52;
+  const avatarPanelW = 480;
+  const textPanelX = 26 + avatarPanelW;
+  const textPanelW = WIDTH - 52 - avatarPanelW;
 
-  const textStartX = isReverse ? PADDING_X : PADDING_X + AVATAR_SIZE + 34;
-  const textBoxWidth = WIDTH - (PADDING_X * 2) - AVATAR_SIZE - 34;
+  let avatarX = 26;
+  let textX = textPanelX;
 
-  try {
-    const avatar = await loadImage(avatarUrl);
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(avatarX + AVATAR_SIZE / 2, avatarY + AVATAR_SIZE / 2, AVATAR_SIZE / 2, 0, Math.PI * 2);
-    ctx.closePath();
-    ctx.clip();
-    ctx.drawImage(avatar, avatarX, avatarY, AVATAR_SIZE, AVATAR_SIZE);
-    ctx.restore();
-
-    ctx.save();
-    ctx.strokeStyle = 'rgba(255,255,255,0.18)';
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.arc(avatarX + AVATAR_SIZE / 2, avatarY + AVATAR_SIZE / 2, AVATAR_SIZE / 2 - 2, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.restore();
-  } catch (_error) {
-    ctx.fillStyle = 'rgba(255,255,255,0.15)';
-    ctx.beginPath();
-    ctx.arc(avatarX + AVATAR_SIZE / 2, avatarY + AVATAR_SIZE / 2, AVATAR_SIZE / 2, 0, Math.PI * 2);
-    ctx.fill();
+  if (theme.avatarOnRight) {
+    avatarX = WIDTH - 26 - avatarPanelW;
+    textX = 26;
   }
 
-  const nameY = PADDING_Y + 18;
-  const handleY = nameY + 50;
-  const quoteY = handleY + 62;
+  await drawAvatarPanel(ctx, avatarUrl, avatarX, panelY, avatarPanelW, panelH);
 
-  const displayNameWidth = textBoxWidth - 10;
-  const nameFontSize = fitFontSize(ctx, displayName, displayNameWidth, 42, 28, 700);
-  ctx.font = `700 ${nameFontSize}px "DejaVu Sans", sans-serif`;
-  ctx.fillStyle = theme.text;
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'top';
-  ctx.fillText(displayName, textStartX, nameY);
-
-  const handle = `@${username}`;
-  ctx.font = `500 26px "DejaVu Sans", sans-serif`;
-  ctx.fillStyle = theme.subtext;
-  ctx.fillText(handle, textStartX, handleY);
-
-  ctx.font = `700 140px "DejaVu Sans", sans-serif`;
-  ctx.fillStyle = theme.quoteMark;
-  ctx.fillText('“', textStartX - 14, quoteY - 22);
-
-  let quoteFontSize = 62;
-  ctx.font = `700 ${quoteFontSize}px "DejaVu Sans", sans-serif`;
-  let lines = wrapText(ctx, text, textBoxWidth, 5);
-
-  while (quoteFontSize > 34) {
-    const totalHeight = lines.length * (quoteFontSize * 1.25);
-    const availableHeight = HEIGHT - quoteY - 90;
-    const tooTall = totalHeight > availableHeight;
-    const tooWide = lines.some((line) => ctx.measureText(line).width > textBoxWidth + 1);
-    if (!tooTall && !tooWide) break;
-    quoteFontSize -= 2;
-    ctx.font = `700 ${quoteFontSize}px "DejaVu Sans", sans-serif`;
-    lines = wrapText(ctx, text, textBoxWidth, 6);
+  if (theme.dividerShadow) {
+    const shadowX = theme.avatarOnRight ? avatarX - 40 : avatarX + avatarPanelW - 40;
+    const shadow = ctx.createLinearGradient(shadowX, 0, shadowX + 80, 0);
+    if (theme.avatarOnRight) {
+      shadow.addColorStop(0, 'rgba(0,0,0,0)');
+      shadow.addColorStop(1, 'rgba(0,0,0,0.35)');
+    } else {
+      shadow.addColorStop(0, 'rgba(0,0,0,0.35)');
+      shadow.addColorStop(1, 'rgba(0,0,0,0)');
+    }
+    ctx.fillStyle = shadow;
+    ctx.fillRect(shadowX, panelY, 80, panelH);
   }
 
-  ctx.font = `700 ${quoteFontSize}px "DejaVu Sans", sans-serif`;
-  ctx.fillStyle = theme.text;
+  const centerX = textX + textPanelW / 2;
 
-  const lineHeight = quoteFontSize * 1.25;
-  lines.forEach((line, index) => {
-    ctx.fillText(line, textStartX, quoteY + index * lineHeight);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  // 本文
+  const quoteMaxWidth = Math.min(420, textPanelW - 90);
+  const quoteMaxHeight = 170;
+  const safeText = text && text.trim() ? text.trim() : ' ';
+  const quoteLayout = fitTextLines(
+    ctx,
+    safeText,
+    quoteMaxWidth,
+    quoteMaxHeight,
+    56,
+    32,
+    3,
+    700
+  );
+
+  ctx.fillStyle = theme.text;
+  ctx.font = `700 ${quoteLayout.fontSize}px "DejaVu Sans", sans-serif`;
+
+  const totalTextHeight = quoteLayout.lines.length * quoteLayout.lineHeight;
+  const quoteBaseY = 210 - totalTextHeight / 2 + quoteLayout.lineHeight / 2;
+
+  quoteLayout.lines.forEach((line, index) => {
+    ctx.fillText(line, centerX, quoteBaseY + index * quoteLayout.lineHeight, quoteMaxWidth + 20);
   });
 
-  ctx.font = `500 18px "DejaVu Sans", sans-serif`;
+  // displayName（主役）
+  const nameMaxWidth = Math.min(440, textPanelW - 80);
+  const nameLayout = fitTextLines(
+    ctx,
+    displayName || username,
+    nameMaxWidth,
+    90,
+    42,
+    24,
+    2,
+    700
+  );
+
+  ctx.fillStyle = theme.text;
+  ctx.font = `700 ${nameLayout.fontSize}px "DejaVu Sans", sans-serif`;
+
+  const nameTotalHeight = nameLayout.lines.length * nameLayout.lineHeight;
+  const nameBaseY = 360 - nameTotalHeight / 2 + nameLayout.lineHeight / 2;
+
+  nameLayout.lines.forEach((line, index) => {
+    ctx.fillText(line, centerX, nameBaseY + index * nameLayout.lineHeight, nameMaxWidth + 20);
+  });
+
+  // @username（小さめ）
+  ctx.font = `500 24px "DejaVu Sans", sans-serif`;
   ctx.fillStyle = theme.subtext;
-  const footerText = 'Generated by /miq';
-  const footerMetrics = ctx.measureText(footerText);
-  const footerX = WIDTH - PADDING_X - footerMetrics.width;
-  const footerY = HEIGHT - PADDING_Y + 8;
-  ctx.fillText(footerText, footerX, footerY);
+  ctx.fillText(`@${username}`, centerX, 445);
+
+  // ID（さらに小さめ）
+  ctx.font = `500 17px "DejaVu Sans", sans-serif`;
+  ctx.fillStyle = theme.subtext;
+  ctx.fillText(String(userId), centerX, 480);
+
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'alphabetic';
+  ctx.font = `500 13px "DejaVu Sans", sans-serif`;
+  ctx.fillStyle = theme.subtext;
+  ctx.fillText('Blueberry Health BOT', WIDTH - 34, HEIGHT - 22);
 
   return canvas.encode('png');
 }
@@ -351,20 +402,22 @@ client.on(Events.InteractionCreate, async (interaction) => {
   await interaction.deferReply();
 
   try {
-    const displayName = member && typeof member.displayName === 'string'
-      ? member.displayName
-      : (user.globalName || user.username);
-
     const avatarUrl = user.displayAvatarURL({
       extension: 'png',
       forceStatic: true,
-      size: 512
+      size: 1024
     });
+
+    const resolvedDisplayName =
+      member && typeof member.displayName === 'string'
+        ? member.displayName
+        : user.globalName || user.username;
 
     const pngBuffer = await renderMiq({
       avatarUrl,
-      displayName,
+      displayName: resolvedDisplayName,
       username: user.username,
+      userId: user.id,
       text,
       type
     });
