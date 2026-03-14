@@ -377,6 +377,12 @@ async function renderMiq({ avatarUrl, displayName, username, userId, text, type 
   ctx.fillStyle = theme.subtext;
   ctx.fillText('Blueberry Health BOT', WIDTH - 34, HEIGHT - 22);
 
+  ctx.fillStyle = '#ff0000';
+  ctx.font = '40px sans-serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText('DEBUG TEXT', 20, 20);
+  
   return canvas.encode('png');
 }
 
